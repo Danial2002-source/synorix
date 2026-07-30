@@ -1,0 +1,292 @@
+# Suricata Configuration for Synorix Security Infrastructure
+# This is the main configuration file for the Suricata IDS/IPS
+
+%YAML 1.1
+---
+
+# Suricata configuration for Docker container
+vars:
+  address-groups:
+    HOME_NET: "[192.168.35.0/24]"
+    EXTERNAL_NET: "!$HOME_NET"
+    HTTP_SERVERS: "[127.0.0.1/32,$HOME_NET]"
+    SMTP_SERVERS: "$HOME_NET"
+    SQL_SERVERS: "$HOME_NET"
+    DNS_SERVERS: "$HOME_NET"
+    TELNET_SERVERS: "$HOME_NET"
+    AIM_SERVERS: "$EXTERNAL_NET"
+    DC_SERVERS: "$HOME_NET"
+    DNP3_SERVER: "$HOME_NET"
+    DNP3_CLIENT: "$HOME_NET"
+    MODBUS_CLIENT: "$HOME_NET"
+    MODBUS_SERVER: "$HOME_NET"
+    ENIP_CLIENT: "$HOME_NET"
+    ENIP_SERVER: "$HOME_NET"
+
+  port-groups:
+    HTTP_PORTS: "[80,3001,8080]"
+    SHELLCODE_PORTS: "!80"
+    ORACLE_PORTS: 1521
+    SSH_PORTS: 22
+    DNP3_PORTS: 20000
+    MODBUS_PORTS: 502
+    FILE_DATA_PORTS: "[$HTTP_PORTS,110,143]"
+    FTP_PORTS: 21
+    GENEVE_PORTS: 6081
+    VXLAN_PORTS: 4789
+    TEREDO_PORTS: 3544
+
+# IDS Mode: passive capture via af-packet (works on any Linux system)
+# For IPS mode, use suricata-ips.yaml with nfqueue (requires real Linux + iptables)
+af-packet:
+  - interface: eth0
+    cluster-id: 99
+    cluster-type: cluster_flow
+    defrag: yes
+    use-mmap: yes
+    tpacket-v3: yes
+
+# Logging configuration
+logging:
+  default-log-level: notice
+  default-output-filter:
+  outputs:
+    - console:
+        enabled: yes
+        type: json
+    - file:
+        enabled: yes
+        level: info
+        filename: /var/log/suricata/suricata.log
+        type: regular
+        format: "[%i] %t [%l] %m"
+    - file:
+        enabled: yes
+        level: warning
+        filename: /var/log/suricata/suricata-warnings.log
+        type: regular
+        format: "[%i] %t [%l] %m"
+    - syslog:
+        enabled: yes
+        facility: local5
+        format: "[%i] <%d> -- %m"
+
+# Application layer parsers
+app-layer:
+  protocols:
+    tls:
+      enabled: yes
+      detection-ports:
+        dp: 443
+    http:
+      enabled: yes
+      memcap: 64mb
+    smtp:
+      enabled: yes
+    imap:
+      enabled: detection-only
+    ftp:
+      enabled: yes
+    ssh:
+      enabled: yes
+    dns:
+      tcp:
+        enabled: yes
+        detection-ports:
+          dp: 53
+      udp:
+        enabled: yes
+        detection-ports:
+          dp: 53
+
+# Detection engine settings
+detect-engine:
+  - profile: medium
+  - custom-values:
+      toclient-groups: 3
+      toserver-groups: 25
+  - sgh-mpm-context: auto
+  - inspection-recursion-limit: 3000
+
+# Action order (IDS mode - alert is the primary action)
+action-order:
+  - pass
+  - alert
+  - drop
+  - reject
+
+# Threading configuration
+threading:
+  set-cpu-affinity: no
+  cpu-affinity:
+    - management-cpu-set:
+        cpu: [ 0 ]
+    - receive-cpu-set:
+        cpu: [ 0 ]
+    - worker-cpu-set:
+        cpu: [ 0-1 ]
+  detect-thread-ratio: 1.0
+
+# Rule files (IDS mode: alert-only rules)
+# Drop/reject rules are in suricata-ips.yaml, not loaded here
+default-rule-path: rules
+rule-files:
+  - ids-rules.rules
+
+# Classification config
+classification-file: classification.config
+
+# Reference config
+reference-config-file: reference.config
+
+# Threshold config
+threshold-file: threshold.config
+
+# Output modules
+outputs:
+  # EVE JSON log
+  - eve-log:
+      enabled: yes
+      filetype: regular
+      filename: /var/log/suricata/ids/eve.json
+      types:
+        - alert:
+            payload: yes
+            payload-buffer-size: 4kb
+            payload-printable: yes
+            packet: yes
+            metadata: no
+            http-body: yes
+            http-body-printable: yes
+        - http:
+            extended: yes
+            dump-all-headers: both
+        #- dns:
+        #    query: yes
+        #    answer: yes
+        #- tls:
+        #    extended: yes
+        #- files:
+        #    force-magic: no
+        #- ssh:
+        #- smtp:
+        #- flow:
+        #- netflow:
+
+  # Unified2 output for integration with other tools
+  - unified2-alert:
+      enabled: no
+
+  # HTTP log
+  - http-log:
+      enabled: no
+
+  # TLS log  
+  - tls-log:
+      enabled: no
+
+  # DNS log
+  - dns-log:
+      enabled: no
+
+  # PCAP log
+  - pcap-log:
+      enabled: no
+
+# Host information
+host:
+  hash-size: 4096
+  prealloc: 1000
+  memcap: 32mb
+
+# IP Reputation (disabled - files not available on this system)
+# reputation-categories-file: /etc/suricata/iprep/categories.txt
+# default-reputation-path: /etc/suricata/iprep
+# reputation-files:
+
+# Host table configurations
+host-mode: auto
+
+# Exception policy for damaged packets
+exception-policy: auto
+
+# Checksum validation
+checksum-validation: yes
+
+# GeoIP configuration (if available)
+geoip-database: /var/lib/GeoIP/GeoIP.dat
+
+# Action order
+action-order:
+  - pass
+  - drop
+  - reject
+  - alert
+
+# Mode: IDS (passive detection, alert only)
+# For active blocking, run suricata-ips.yaml on a real Linux host
+max-pending-packets: 1024
+runmode: autofp
+
+# Memory settings
+stream:
+  memcap: 64mb
+  checksum-validation: yes
+  inline: auto
+  reassembly:
+    memcap: 256mb
+    depth: 1mb
+    toserver-chunk-size: 2560
+    toclient-chunk-size: 2560
+    randomize-chunk-size: yes
+
+# Flow settings
+flow:
+  memcap: 128mb
+  hash-size: 65536
+  prealloc: 10000
+  emergency-recovery: 30
+
+# Flow timeouts
+flow-timeouts:
+  default:
+    new: 30
+    established: 300
+    closed: 0
+    bypassed: 100
+    emergency-new: 10
+    emergency-established: 100
+    emergency-closed: 0
+    emergency-bypassed: 50
+  tcp:
+    new: 60
+    established: 600
+    closed: 60
+    bypassed: 100
+    emergency-new: 5
+    emergency-established: 300
+    emergency-closed: 20
+    emergency-bypassed: 50
+  udp:
+    new: 30
+    established: 300
+    bypassed: 100
+    emergency-new: 10
+    emergency-established: 100
+    emergency-bypassed: 50
+  icmp:
+    new: 30
+    established: 300
+    bypassed: 100
+    emergency-new: 10
+    emergency-established: 100
+    emergency-bypassed: 50
+
+# Defrag settings
+defrag:
+  memcap: 32mb
+  hash-size: 65536
+  trackers: 65536
+  max-frags: 65536
+  prealloc: yes
+  timeout: 60

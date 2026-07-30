@@ -1,0 +1,6 @@
+.app {
+  min-height: 100vh;
+  background: var(--bg-app);
+  position: relative;
+  font-family: var(--font-family);
+}

@@ -1,0 +1,254 @@
+# Suricata IPS Configuration for Synorix Security Infrastructure
+# ---------------------------------------------------------------
+# MODE: Inline IPS (Intrusion Prevention System)
+# REQUIRES: Linux kernel with NFQUEUE support (nfnetlink_queue module)
+#           Works on real Linux and WSL2 kernels >= 6.x (microsoft-standard-WSL2)
+#           Does NOT work on older WSL2 kernels or Windows Hyper-V without NFQUEUE
+#
+# Prerequisites before starting:
+#   sudo iptables -I FORWARD -j NFQUEUE --queue-num 0 --queue-bypass
+#   sudo iptables -I INPUT   -j NFQUEUE --queue-num 0 --queue-bypass
+# Then start Suricata with:
+#   sudo suricata -c /etc/suricata/suricata-ips.yaml -q 0
+# Or use the provided script:
+#   sudo ./start-suricata-ips.sh
+# ---------------------------------------------------------------
+
+%YAML 1.1
+---
+
+vars:
+  address-groups:
+    HOME_NET: "[192.168.35.0/24]"
+    EXTERNAL_NET: "!$HOME_NET"
+    HTTP_SERVERS: "[127.0.0.1/32,$HOME_NET]"
+    SMTP_SERVERS: "$HOME_NET"
+    SQL_SERVERS: "$HOME_NET"
+    DNS_SERVERS: "$HOME_NET"
+    TELNET_SERVERS: "$HOME_NET"
+    AIM_SERVERS: "$EXTERNAL_NET"
+    DC_SERVERS: "$HOME_NET"
+    DNP3_SERVER: "$HOME_NET"
+    DNP3_CLIENT: "$HOME_NET"
+    MODBUS_CLIENT: "$HOME_NET"
+    MODBUS_SERVER: "$HOME_NET"
+    ENIP_CLIENT: "$HOME_NET"
+    ENIP_SERVER: "$HOME_NET"
+
+  port-groups:
+    HTTP_PORTS: "[80,3001,8080]"
+    SHELLCODE_PORTS: "!80"
+    ORACLE_PORTS: 1521
+    SSH_PORTS: 22
+    DNP3_PORTS: 20000
+    MODBUS_PORTS: 502
+    FILE_DATA_PORTS: "[$HTTP_PORTS,110,143]"
+    FTP_PORTS: 21
+    GENEVE_PORTS: 6081
+    VXLAN_PORTS: 4789
+    TEREDO_PORTS: 3544
+
+# IPS Mode: inline via NFQUEUE
+# Traffic is routed through this queue by iptables BEFORE reaching the application.
+# Suricata can then drop malicious packets in real time.
+nfq:
+  mode: accept
+  #repeat-mark: 1    # not needed in accept mode
+  #repeat-mask: 1
+  #bypass-mark: 1
+  #bypass-mask: 1
+  #route-queue: 2   # DISABLED - no listener on queue 2, causes packet drops
+  batchcount: 20
+  fail-open: yes   # if Suricata crashes, let traffic through rather than blocking all
+
+# af-packet fallback for interface eth0 (your actual interface)
+af-packet:
+  - interface: eth0
+    cluster-id: 99
+    cluster-type: cluster_flow
+    defrag: yes
+    use-mmap: yes
+    tpacket-v3: no
+
+# Logging
+logging:
+  default-log-level: notice
+  outputs:
+    - console:
+        enabled: yes
+        type: json
+    - file:
+        enabled: yes
+        level: info
+        filename: /var/log/suricata/suricata-ips.log
+        type: regular
+
+# Application layer parsers
+app-layer:
+  protocols:
+    tls:
+      enabled: yes
+      detection-ports:
+        dp: 443
+    http:
+      enabled: yes
+      memcap: 64mb
+    smtp:
+      enabled: yes
+    imap:
+      enabled: detection-only
+    ftp:
+      enabled: yes
+    ssh:
+      enabled: yes
+    dns:
+      tcp:
+        enabled: yes
+        detection-ports:
+          dp: 53
+      udp:
+        enabled: yes
+        detection-ports:
+          dp: 53
+
+# Detection engine
+detect-engine:
+  - profile: medium
+  - custom-values:
+      toclient-groups: 3
+      toserver-groups: 25
+  - sgh-mpm-context: auto
+  - inspection-recursion-limit: 3000
+
+# Action order (IPS: drop evaluated before alert so blockers take priority)
+action-order:
+  - pass
+  - drop
+  - reject
+  - alert
+
+# Threading
+threading:
+  set-cpu-affinity: no
+  detect-thread-ratio: 1.0
+
+# Rule files (IPS mode: drop/reject rules ONLY)
+# Alert-only rules are NOT loaded here to keep behaviour deterministic.
+default-rule-path: rules
+rule-files:
+  - ips-rules.rules
+
+# Classification / reference configs
+classification-file: classification.config
+reference-config-file: reference.config
+threshold-file: threshold.config
+
+# Outputs
+outputs:
+  - eve-log:
+      enabled: yes
+      filetype: regular
+      filename: /var/log/suricata/ips/eve.json
+      types:
+        - alert:
+            payload: yes
+            payload-buffer-size: 4kb
+            payload-printable: yes
+            packet: yes
+            metadata: no
+            http-body: yes
+            http-body-printable: yes
+        - http:
+            extended: yes
+        #- dns:
+        #    query: yes
+        #    answer: yes
+        #- tls:
+        #    extended: yes
+        #- ssh:
+        #- flow:
+
+  - unified2-alert:
+      enabled: no
+  - http-log:
+      enabled: no
+  - pcap-log:
+      enabled: no
+
+# Memory settings
+host:
+  hash-size: 4096
+  prealloc: 1000
+  memcap: 32mb
+
+# IP Reputation (disabled for this system)
+# reputation-categories-file: /etc/suricata/iprep/categories.txt
+# default-reputation-path: /etc/suricata/iprep
+# reputation-files:
+
+# Host table configurations
+host-mode: auto
+exception-policy: drop-flow   # in IPS mode: drop flow on exception rather than pass
+checksum-validation: yes
+
+max-pending-packets: 1024
+runmode: workers   # workers mode is required for inline/NFQUEUE
+
+stream:
+  memcap: 64mb
+  checksum-validation: yes
+  inline: yes   # enable inline stream handling for IPS
+  reassembly:
+    memcap: 256mb
+    depth: 1mb
+    toserver-chunk-size: 2560
+    toclient-chunk-size: 2560
+    randomize-chunk-size: yes
+
+flow:
+  memcap: 128mb
+  hash-size: 65536
+  prealloc: 10000
+  emergency-recovery: 30
+
+flow-timeouts:
+  default:
+    new: 30
+    established: 300
+    closed: 0
+    bypassed: 100
+    emergency-new: 10
+    emergency-established: 100
+    emergency-closed: 0
+    emergency-bypassed: 50
+  tcp:
+    new: 60
+    established: 600
+    closed: 60
+    bypassed: 100
+    emergency-new: 5
+    emergency-established: 300
+    emergency-closed: 20
+    emergency-bypassed: 50
+  udp:
+    new: 30
+    established: 300
+    bypassed: 100
+    emergency-new: 10
+    emergency-established: 100
+    emergency-bypassed: 50
+  icmp:
+    new: 30
+    established: 300
+    bypassed: 100
+    emergency-new: 10
+    emergency-established: 100
+    emergency-bypassed: 50
+
+defrag:
+  memcap: 32mb
+  hash-size: 65536
+  trackers: 65536
+  max-frags: 65536
+  prealloc: yes
+  timeout: 60

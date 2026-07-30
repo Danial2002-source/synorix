@@ -1,0 +1,91 @@
+# Dependencies
+node_modules
+synorix-env/
+__pycache__/
+
+# Build artifacts
+dist
+dist-ssr
+*.local
+*.o
+main
+security-proxy/synorix-security-proxy
+synorix-security-proxy
+
+# Logs and runtime files
+logs
+*.log
+*.pid
+*.tmp
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Suricata specific files
+services/suricata/logs/*
+!services/suricata/logs/.gitkeep
+*.pcap
+*.eve
+/var/log/suricata/*
+
+# Docker volumes and data
+docker-volumes/
+data/
+*.db-wal
+*.db-shm
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Sensitive local files
+.secrets/
+*.pem
+*.key
+*.crt
+*.cer
+*.pfx
+certs/
+security-proxy/certs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
+
+# Temporary files
+tmp/
+temp/
+*.backup
+
+# Database files (in development)
+*.db
+*.sqlite
+*.sqlite3
+
+# Data directories with sensitive info
+data/
+var/
+
+.vercel
+.env*.local  

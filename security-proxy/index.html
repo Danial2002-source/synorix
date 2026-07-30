@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synorix Security Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 800px;
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: #00ff88;
+            filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.5));
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #00ff88 0%, #00bfff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        p {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 2rem;
+        }
+        
+        .alert {
+            background: rgba(255, 170, 0, 0.1);
+            border: 1px solid rgba(255, 170, 0, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .alert h2 {
+            color: #ffaa00;
+            margin-bottom: 0.5rem;
+        }
+        
+        .alert p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: left;
+        }
+        
+        .instructions h3 {
+            color: #00ff88;
+            margin-bottom: 1rem;
+        }
+        
+        .instructions code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #00bfff;
+        }
+        
+        .instructions ol {
+            margin-left: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .instructions li {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        
+        .status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .status-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .status-card h4 {
+            color: #00ff88;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .status-card p {
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🛡️</div>
+        <h1>Synorix Security Platform</h1>
+        <p>Advanced Web Application Firewall & Security Monitoring</p>
+        
+        <div class="alert">
+            <h2>⚠️ Frontend Build Required</h2>
+            <p>The React frontend needs to be rebuilt with Node.js 20+ to see the latest changes.</p>
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 Build Instructions</h3>
+            <p>To build and deploy the updated frontend with the new navigation and dashboard:</p>
+            <ol>
+                <li>Upgrade Node.js to version 20.19+ or 22.12+:
+                    <br><code>nvm install 20</code> or <code>nvm install 22</code>
+                </li>
+                <li>Build the frontend:
+                    <br><code>cd /home/asna/synorix && npm run build</code>
+                </li>
+                <li>Copy build files to security-proxy:
+                    <br><code>cp -r dist/* security-proxy/</code>
+                </li>
+                <li>Restart the security-proxy service</li>
+            </ol>
+            
+            <div class="status">
+                <div class="status-card">
+                    <h4>Backend Server</h4>
+                    <p>✅ Running (Port 3001)</p>
+                </div>
+                <div class="status-card">
+                    <h4>Security Proxy</h4>
+                    <p>✅ Running (Port 8080)</p>
+                </div>
+                <div class="status-card">
+                    <h4>IDS/IPS Service</h4>
+                    <p>✅ Running (Port 8083)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

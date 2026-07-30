@@ -1,0 +1,50 @@
+{
+  "numeric_features": [
+    "body_bytes",
+    "rtt_ms",
+    "ttfb_ms",
+    "client_bw_mbps",
+    "cpu_load",
+    "queue_depth",
+    "prior_compress_saving"
+  ],
+  "categorical_features": [
+    "content_type",
+    "cacheability_bucket",
+    "proto"
+  ],
+  "bool_features": [
+    "supports_gzip",
+    "supports_zstd",
+    "supports_br"
+  ],
+  "categorical_mappings": {
+    "content_type": {
+      "application/javascript": 0,
+      "application/json": 1,
+      "application/octet-stream": 2,
+      "application/pdf": 3,
+      "application/xml": 4,
+      "application/zip": 5,
+      "image/gif": 6,
+      "image/jpeg": 7,
+      "image/png": 8,
+      "image/svg+xml": 9,
+      "image/webp": 10,
+      "text/css": 11,
+      "text/html": 12,
+      "text/plain": 13,
+      "video/mp4": 14,
+      "video/webm": 15
+    },
+    "cacheability_bucket": {
+      "no-store": 0,
+      "private-cacheable": 1,
+      "public-cacheable": 2
+    },
+    "proto": {
+      "h1": 0,
+      "h2": 1
+    }
+  }
+}
