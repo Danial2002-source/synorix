@@ -4,12 +4,8 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/user-proxy/:path*",
-      "destination": "http://165.232.166.48:8080/user-proxy/:path*"
-    },
-    {
       "source": "/api/:path*",
-      "destination": "http://165.232.166.48:3001/api/:path*"
+      "destination": "${BACKEND_URL}/api/:path*"
     },
     {
       "source": "/((?!api).*)",
@@ -18,7 +14,7 @@
   ],
   "headers": [
     {
-      "source": "/((?!api|user-proxy).*)",
+      "source": "/((?!api).*)",
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "*" },
         { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,DELETE,PATCH,OPTIONS" },
