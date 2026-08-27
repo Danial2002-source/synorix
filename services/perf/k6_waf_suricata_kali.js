@@ -575,7 +575,7 @@ ${'='.repeat(60)}
     Log4Shell (JNDI)    · Webshell upload
     Scanner UAs         · Brute force
 ${'='.repeat(60)}
-  TIP: Check https://synorix-pied-chi.vercel.app/user/alerts
+  TIP: Check https://synorix.vercel.app/user/alerts
        for live WAF + Suricata alerts in the dashboard.
 ${'='.repeat(60)}
 `;

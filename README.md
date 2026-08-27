@@ -158,7 +158,7 @@ go build -o synorix-security-proxy ./main.go
 
 ## Usage
 
-Live demo: https://synorix-pied-chi.vercel.app/
+Live demo: https://synorix.vercel.app/
 
 1. Open the app at `http://localhost:3000`
 2. Register or log in
