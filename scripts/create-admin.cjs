@@ -45,7 +45,7 @@ async function createAdmin() {
     });
 
     // Create user config
-    const apiKey = `nxr_${crypto.randomBytes(32).toString('hex')}`;
+    const apiKey = `syn_${crypto.randomBytes(32).toString('hex')}`;
     
     await new Promise((resolve, reject) => {
       db.run(
