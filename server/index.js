@@ -677,46 +677,63 @@ db.serialize(() => {
       return;
     }
     
-    if (result.count === 0) {
-      console.log('📦 Importing WAF rules from file to database...');
+    if (result && result.count === 0) {
       const fs = require('fs');
-      const wafPath = fs.existsSync(path.join(__dirname, '../services/firewall/waf-rules.json'))
-        ? path.join(__dirname, '../services/firewall/waf-rules.json')
-        : path.join(__dirname, '../security-proxy/data/waf_rules.json');
+      const possibleWafPaths = [
+        path.join(__dirname, '../services/firewall/waf-rules.json'),
+        path.join(__dirname, 'services/firewall/waf-rules.json'),
+        path.join(__dirname, '../security-proxy/data/waf_rules.json'),
+        path.join(__dirname, 'waf-rules.json'),
+        path.join(process.cwd(), 'services/firewall/waf-rules.json'),
+        path.join(process.cwd(), '../services/firewall/waf-rules.json')
+      ];
+
+      const wafPath = possibleWafPaths.find(p => fs.existsSync(p));
       
-      fs.readFile(wafPath, 'utf8', (readErr, data) => {
-        if (readErr) {
-          console.error('❌ Failed to read WAF rules file:', readErr);
-          return;
-        }
-        
-        try {
-          const wafRules = JSON.parse(data);
-          if (Array.isArray(wafRules)) {
-            const stmt = db.prepare(
-              `INSERT OR IGNORE INTO waf_rules (id, pattern, message, tags, severity, enabled) 
-               VALUES (?, ?, ?, ?, ?, ?)`
-            );
-            
-            wafRules.forEach(rule => {
-              stmt.run([
-                rule.id,
-                rule.pattern,
-                rule.message,
-                rule.tags,
-                rule.severity,
-                rule.enabled ? 1 : 0
-              ]);
-            });
-            
-            stmt.finalize(() => {
-              console.log(`✅ Imported ${wafRules.length} WAF rules to database`);
-            });
+      const insertRules = (rules) => {
+        const stmt = db.prepare(
+          `INSERT OR IGNORE INTO waf_rules (id, pattern, message, tags, severity, enabled) 
+           VALUES (?, ?, ?, ?, ?, ?)`
+        );
+        rules.forEach(rule => {
+          stmt.run([
+            rule.id,
+            rule.pattern,
+            rule.message,
+            rule.tags || 'OWASP/CRS',
+            rule.severity || 4,
+            rule.enabled !== false ? 1 : 0
+          ]);
+        });
+        stmt.finalize(() => {
+          console.log(`✅ Loaded ${rules.length} WAF core rules into database`);
+        });
+      };
+
+      if (wafPath) {
+        fs.readFile(wafPath, 'utf8', (readErr, data) => {
+          if (!readErr) {
+            try {
+              const wafRules = JSON.parse(data);
+              if (Array.isArray(wafRules)) {
+                insertRules(wafRules);
+                return;
+              }
+            } catch (e) {
+              console.warn('⚠️  Could not parse WAF rules file, loading defaults:', e.message);
+            }
           }
-        } catch (parseErr) {
-          console.error('❌ Failed to parse WAF rules:', parseErr);
-        }
-      });
+        });
+      } else {
+        // Fallback default OWASP core rule set
+        console.log('ℹ️  Using embedded OWASP core WAF rules...');
+        insertRules([
+          { id: '942100', pattern: "(?i)(union\\s+select|select.*from|insert\\s+into|delete\\s+from|drop\\s+table|'\\s+or\\s+'1'='1|'\\s+or\\s+1=1)", message: "SQL Injection attack detected", tags: "OWASP_CRS/WEB_ATTACK/SQLI", severity: 5, enabled: 1 },
+          { id: '941100', pattern: "(?i)(<script.*?>|javascript:|onload\\s*=|onerror\\s*=|document\\.cookie|alert\\()", message: "XSS Cross-Site Scripting attack detected", tags: "OWASP_CRS/WEB_ATTACK/XSS", severity: 4, enabled: 1 },
+          { id: '930100', pattern: "(?i)(\\.\\./|\\.\\.\\\\|/etc/passwd|/windows/win\\.ini|/boot\\.ini)", message: "Path Traversal attack detected", tags: "OWASP_CRS/WEB_ATTACK/LFI", severity: 4, enabled: 1 },
+          { id: '932100', pattern: "(?i)(;\\s*cat\\s|;\\s*ls\\s|;\\s*whoami|;\\s*id|\\|\\s*curl|`.*?`)", message: "Remote Command Execution (RCE) attempt detected", tags: "OWASP_CRS/WEB_ATTACK/RCE", severity: 5, enabled: 1 }
+        ]);
+      }
     }
   });
 
@@ -727,14 +744,25 @@ db.serialize(() => {
       return;
     }
     
-    if (result.count === 0) {
-      console.log('📦 Importing Suricata rules from files to database...');
+    if (result && result.count === 0) {
       const fs = require('fs');
-      const rulesPath = path.join(__dirname, '../services/suricata/rules');
+      const possibleRulesPaths = [
+        path.join(__dirname, '../services/suricata/rules'),
+        path.join(__dirname, 'services/suricata/rules'),
+        path.join(process.cwd(), 'services/suricata/rules'),
+        path.join(process.cwd(), '../services/suricata/rules')
+      ];
+      
+      const rulesPath = possibleRulesPaths.find(p => fs.existsSync(p));
+      
+      if (!rulesPath) {
+        console.log('ℹ️  Suricata rules directory not found (skipping file import, using default tables)');
+        return;
+      }
       
       fs.readdir(rulesPath, (readErr, files) => {
         if (readErr) {
-          console.error('❌ Failed to read Suricata rules directory:', readErr);
+          console.warn('⚠️  Could not read Suricata rules directory:', readErr.message);
           return;
         }
         
