@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Activity, AlertTriangle, RefreshCw, Eye, Filter, Ban, Lock, Globe, Play, Pause, Edit, Trash2, Plus, X, Save } from 'lucide-react';
 import Navigation from './Navigation';
+import PhaseNotice from './PhaseNotice';
 import './FirewallManagement.css';
 
 interface WAFRule {
@@ -282,6 +283,14 @@ const FirewallManagement: React.FC = () => {
             Refresh
           </button>
         </motion.div>
+
+        <PhaseNotice
+          statusBadge="45% FYP-1 Milestone"
+          phase="Phase 2 In Development (Oct 2026)"
+          title="Web Application Firewall (WAF) Rule Management"
+          description="In Phase 1, baseline OWASP core rule patterns (SQLi, XSS, Path Traversal) are inspected via pre-compiled Go regex signatures. Dynamic rule authoring, real-time threshold scoring, and custom IP rate-limiting are under active development for Phase 2."
+          isMockData={false}
+        />
 
         {/* Stats Overview */}
         {stats && (

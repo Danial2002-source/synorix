@@ -23,11 +23,11 @@
 .ud-sidebar {
   width: 240px;
   min-width: 240px;
-  background: #0A2F6B;
+  background: #FFFFFF;
   display: flex;
   flex-direction: column;
-  border-right: none;
-  box-shadow: 4px 0 16px rgba(0,0,0,0.18);
+  border-right: 1px solid #E5E7EB;
+  box-shadow: 1px 0 4px rgba(0, 0, 0, 0.04);
   overflow-y: auto;
 }
 
@@ -36,7 +36,8 @@
   align-items: center;
   justify-content: center;
   padding: 16px 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid #E5E7EB;
+  background: #FFFFFF;
 }
 
 .ud-sidebar-logo {
@@ -45,7 +46,7 @@
 }
 
 .ud-sidebar-logo-img {
-  width: 120px;
+  width: 130px;
   height: auto;
   display: block;
   margin: 0 auto;
@@ -54,14 +55,14 @@
 .ud-sidebar-header h2 {
   font-size: 17px;
   font-weight: 700;
-  color: #FFFFFF;
+  color: #1F2933;
   margin: 0;
   letter-spacing: -0.3px;
 }
 
 .ud-sidebar-header p {
   font-size: 11px;
-  color: #E3F2FD;
+  color: #6B7280;
   margin: 2px 0 0;
   font-weight: 400;
 }
@@ -83,7 +84,7 @@
   border-radius: 8px;
   border: none;
   background: transparent;
-  color: #42A5F5;
+  color: #4B5563;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -95,14 +96,15 @@
 }
 
 .ud-nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #FFFFFF;
+  background: #F3F4F6;
+  color: #111827;
 }
 
 .ud-nav-item.active {
   background: #0D47A1 !important;
   color: #FFFFFF !important;
   font-weight: 600;
+  box-shadow: 0 2px 6px rgba(13, 71, 161, 0.25);
 }
 
 .ud-nav-badge {
@@ -123,7 +125,8 @@
   align-items: center;
   gap: 10px;
   padding: 16px 16px 18px;
-  border-top: 1px solid rgba(255,255,255,0.07);
+  background: #F9FAFB;
+  border-top: 1px solid #E5E7EB;
 }
 
 .ud-avatar {
@@ -150,7 +153,7 @@
 .ud-username {
   font-size: 13px;
   font-weight: 600;
-  color: #FFFFFF;
+  color: #1F2933;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -158,22 +161,26 @@
 
 .ud-role {
   font-size: 11px;
-  color: #E3F2FD;
+  color: #6B7280;
 }
 
 .ud-logout {
   background: transparent;
   border: none;
-  color: #E3F2FD;
+  color: #6B7280;
   cursor: pointer;
   padding: 4px;
   border-radius: 6px;
   display: flex;
   align-items: center;
-  transition: color 0.15s;
+  justify-content: center;
+  transition: all 0.15s;
 }
 
-.ud-logout:hover { color: #F87171; }
+.ud-logout:hover {
+  color: #DC2626;
+  background: #FEE2E2;
+}
 
 /* ─── Main ─────────────────────────────────────────────────────── */
 .ud-main {
