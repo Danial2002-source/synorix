@@ -124,7 +124,7 @@ const Homepage: React.FC = () => {
               transition={{ delay: 0.2 }}
             >
               <span className="eyebrow-dot"></span>
-              <span>ENTERPRISE SECURITY PLATFORM</span>
+              <span>⚡ FYP-1 MILESTONE (45% COMPLETED) | PHASE 2 IN PROGRESS</span>
             </motion.div>
 
             <motion.h1
@@ -132,8 +132,8 @@ const Homepage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              Enterprise Security,<br />
-              <span className="gradient-text">Simplified.</span>
+              Smart AI-Driven Proxy,<br />
+              <span className="gradient-text">Unified Defense & Optimization.</span>
             </motion.h1>
 
             <motion.p
@@ -142,8 +142,7 @@ const Homepage: React.FC = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              Protect your network with AI-powered threat detection, intelligent firewall,
-              and real-time monitoring. Deploy in minutes, secure forever.
+              Synorix combines AI-assisted compression, Web Application Firewall (WAF), and Suricata IDS threat monitoring into a high-concurrency reverse proxy architecture.
             </motion.p>
 
             <motion.div

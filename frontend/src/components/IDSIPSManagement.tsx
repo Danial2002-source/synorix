@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Activity, AlertTriangle, CheckCircle, XCircle, RefreshCw, Eye, Settings, FileText } from 'lucide-react';
 import Navigation from './Navigation';
+import PhaseNotice from './PhaseNotice';
 import './IDSIPSManagement.css';
 
 interface SuricataAlert {
@@ -368,6 +369,14 @@ const IDSIPSManagement: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <PhaseNotice
+        statusBadge="45% FYP-1 Milestone"
+        phase="Phase 2 In Development (Nov 2026)"
+        title="Intrusion Detection (IDS) vs Inline Prevention (IPS) Pipeline"
+        description="Phase 1 implements passive Suricata IDS signature inspection and eve.json alert extraction. Active inline kernel packet dropping via Linux NFQUEUE is scheduled for Phase 2 implementation."
+        isMockData={!health?.suricata_running}
+      />
 
       {/* Navigation Tabs */}
       <div className="idsips-tabs">

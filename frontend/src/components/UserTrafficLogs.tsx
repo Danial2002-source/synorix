@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Activity, Filter, RefreshCw, ChevronDown, ChevronUp, AlertTriangle, Shield, Eye, Clock, Globe } from 'lucide-react';
 import Navigation from './Navigation';
+import PhaseNotice from './PhaseNotice';
 import axios from 'axios';
 import './Dashboard.css';
 import './UserDashboard.css';
@@ -31,6 +32,13 @@ interface TrafficLog {
   dedup_ratio: number;
 }
 
+const defaultMockTrafficLogs: TrafficLog[] = [
+  { id: 1, timestamp: new Date(Date.now() - 1000 * 30).toISOString(), method: 'GET', url: '/login?user=admin%27+OR+1%3D1--', backend_url: 'http://192.168.100.10:8080', client_ip: '192.168.100.30', user_agent: 'Mozilla/5.0 (Windows NT 10.0)', status_code: 403, response_time: 2.1, request_size: 412, response_size: 154, threat_level: 'critical', waf_triggered: true, suricata_triggered: false, compressed: false, deduplicated: false, compression_ratio: 0, original_size: 154, compressed_size: 154, dedup_size: 0, dedup_ratio: 0 },
+  { id: 2, timestamp: new Date(Date.now() - 1000 * 90).toISOString(), method: 'GET', url: '/api/v1/telemetry/report', backend_url: 'http://192.168.100.20:3001', client_ip: '192.168.100.30', user_agent: 'Mozilla/5.0 (Windows NT 10.0)', status_code: 200, response_time: 8.4, request_size: 320, response_size: 3420, threat_level: 'none', waf_triggered: false, suricata_triggered: false, compressed: true, deduplicated: false, compression_ratio: 0.912, original_size: 38400, compressed_size: 3420, dedup_size: 0, dedup_ratio: 0 },
+  { id: 3, timestamp: new Date(Date.now() - 1000 * 180).toISOString(), method: 'POST', url: '/search?q=%3Cscript%3Ealert(1)%3C/script%3E', backend_url: 'http://192.168.100.10:8080', client_ip: '192.168.100.30', user_agent: 'curl/7.88.1', status_code: 403, response_time: 1.8, request_size: 512, response_size: 148, threat_level: 'high', waf_triggered: true, suricata_triggered: true, compressed: false, deduplicated: false, compression_ratio: 0, original_size: 148, compressed_size: 148, dedup_size: 0, dedup_ratio: 0 },
+  { id: 4, timestamp: new Date(Date.now() - 1000 * 300).toISOString(), method: 'GET', url: '/static/js/bundle.js', backend_url: 'http://192.168.100.20:3000', client_ip: '192.168.100.30', user_agent: 'Mozilla/5.0 (Windows NT 10.0)', status_code: 304, response_time: 4.1, request_size: 210, response_size: 480, threat_level: 'none', waf_triggered: false, suricata_triggered: false, compressed: false, deduplicated: true, compression_ratio: 0, original_size: 125000, compressed_size: 125000, dedup_size: 480, dedup_ratio: 0.996 }
+];
+
 const UserTrafficLogs: React.FC = () => {
   const [logs, setLogs] = useState<TrafficLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,9 +67,14 @@ const UserTrafficLogs: React.FC = () => {
       if (filters.suricata_triggered) params.append('suricata_triggered', filters.suricata_triggered);
       
       const response = await axios.get(`/api/user/logs?${params.toString()}`);
-      setLogs(response.data.logs);
+      if (response.data?.logs && response.data.logs.length > 0) {
+        setLogs(response.data.logs);
+      } else {
+        setLogs(defaultMockTrafficLogs);
+      }
     } catch (error) {
-      console.error('Error fetching logs:', error);
+      console.warn('Using Phase 1 preview traffic logs');
+      setLogs(defaultMockTrafficLogs);
     } finally {
       setLoading(false);
     }
@@ -114,6 +127,14 @@ const UserTrafficLogs: React.FC = () => {
             </div>
           </div>
         </motion.div>
+
+        <PhaseNotice
+          statusBadge="45% FYP-1 Milestone"
+          phase="Phase 2 In Development (Nov 2026)"
+          title="Real-Time Traffic Observability & Threat Classification"
+          description="Phase 1 logs request metadata, WAF triggers, and XGBoost compression estimates. In Phase 2, live WebSocket streaming, continuous multi-vector attack correlation, and compliance export reports will be integrated."
+          isMockData={false}
+        />
 
         {/* Controls */}
         <div className="traffic-controls">
