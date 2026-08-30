@@ -483,7 +483,7 @@ ${'='.repeat(60)}
     SSTI               : ${catPct('cat_ssti_blocked')}
     Scanner UAs        : ${catPct('cat_scanner_blocked')}
 ${'='.repeat(60)}
-  TIP: Check https://synorix-pied-chi.vercel.app/user/alerts
+  TIP: Check https://synorix.vercel.app/user/alerts
        for live WAF alerts in the dashboard.
 ${'='.repeat(60)}
 `;

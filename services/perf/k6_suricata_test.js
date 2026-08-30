@@ -436,7 +436,7 @@ ${'='.repeat(60)}
         Suricata operates at the network/packet level (not application).
 ${'='.repeat(60)}
   TIP: Check the admin dashboard for Suricata alerts:
-       https://synorix-pied-chi.vercel.app/admin → IDS/IPS Alerts
+       https://synorix.vercel.app/admin → IDS/IPS Alerts
 ${'='.repeat(60)}
 `;
   console.log(summary);

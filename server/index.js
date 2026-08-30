@@ -279,6 +279,7 @@ db.serialize(() => {
       compressed_size INTEGER DEFAULT 0,
       dedup_size INTEGER DEFAULT 0,
       dedup_ratio REAL DEFAULT 0,
+      app_id INTEGER REFERENCES user_applications(id) ON DELETE SET NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
     )
@@ -307,6 +308,9 @@ db.serialize(() => {
       comment TEXT,
       auto_blocked BOOLEAN DEFAULT 0,
       correlation_id TEXT,
+      scope TEXT DEFAULT 'global' CHECK(scope IN ('global','application')),
+      occurrence_count INTEGER DEFAULT 1,
+      app_id INTEGER REFERENCES user_applications(id) ON DELETE SET NULL,
       timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
     )
@@ -537,36 +541,45 @@ db.serialize(() => {
 
   // Migration: Add app_id column to user_request_logs and user_alerts
   db.all("PRAGMA table_info(user_request_logs)", (err, cols) => {
-    if (!err && !cols.some(c => c.name === 'app_id')) {
-      db.run(`ALTER TABLE user_request_logs ADD COLUMN app_id INTEGER REFERENCES user_applications(id) ON DELETE SET NULL`, e =>
-        e ? console.error('Migration failed: app_id on user_request_logs', e) : console.log('✅ app_id added to user_request_logs'));
-      // backfill existing rows by matching backend_url
-      db.run(`UPDATE user_request_logs SET app_id = (
-        SELECT ua.id FROM user_applications ua
-        WHERE ua.user_id = user_request_logs.user_id AND ua.backend_url = user_request_logs.backend_url
-        LIMIT 1
-      ) WHERE app_id IS NULL`);
+    if (!err && cols && !cols.some(c => c.name === 'app_id')) {
+      db.run(`ALTER TABLE user_request_logs ADD COLUMN app_id INTEGER REFERENCES user_applications(id) ON DELETE SET NULL`, e => {
+        if (e) {
+          console.error('Migration notice: app_id on user_request_logs', e.message);
+        } else {
+          console.log('✅ app_id added to user_request_logs');
+          // backfill existing rows by matching backend_url
+          db.run(`UPDATE user_request_logs SET app_id = (
+            SELECT ua.id FROM user_applications ua
+            WHERE ua.user_id = user_request_logs.user_id AND ua.backend_url = user_request_logs.backend_url
+            LIMIT 1
+          ) WHERE app_id IS NULL`, (backfillErr) => {
+            if (backfillErr) console.warn('Backfill app_id on user_request_logs notice:', backfillErr.message);
+          });
+        }
+      });
     }
   });
   db.all("PRAGMA table_info(user_alerts)", (err2, cols2) => {
-    if (!err2 && !cols2.some(c => c.name === 'app_id')) {
-      db.run(`ALTER TABLE user_alerts ADD COLUMN app_id INTEGER REFERENCES user_applications(id) ON DELETE SET NULL`, e =>
-        e ? console.error('Migration failed: app_id on user_alerts', e) : console.log('✅ app_id added to user_alerts'));
-    }
-    if (!err2 && !cols2.some(c => c.name === 'scope')) {
-      db.run(`ALTER TABLE user_alerts ADD COLUMN scope TEXT DEFAULT 'global' CHECK(scope IN ('global','application'))`, e =>
-        e ? console.error('Migration failed: scope on user_alerts', e) : console.log('✅ scope added to user_alerts'));
-    }
-    if (!err2 && !cols2.some(c => c.name === 'occurrence_count')) {
-      db.run(`ALTER TABLE user_alerts ADD COLUMN occurrence_count INTEGER DEFAULT 1`, e =>
-        e ? console.error('Migration failed: occurrence_count on user_alerts', e) : console.log('✅ occurrence_count added to user_alerts'));
+    if (!err2 && cols2) {
+      if (!cols2.some(c => c.name === 'app_id')) {
+        db.run(`ALTER TABLE user_alerts ADD COLUMN app_id INTEGER REFERENCES user_applications(id) ON DELETE SET NULL`, e =>
+          e ? console.warn('Migration notice: app_id on user_alerts', e.message) : console.log('✅ app_id added to user_alerts'));
+      }
+      if (!cols2.some(c => c.name === 'scope')) {
+        db.run(`ALTER TABLE user_alerts ADD COLUMN scope TEXT DEFAULT 'global' CHECK(scope IN ('global','application'))`, e =>
+          e ? console.warn('Migration notice: scope on user_alerts', e.message) : console.log('✅ scope added to user_alerts'));
+      }
+      if (!cols2.some(c => c.name === 'occurrence_count')) {
+        db.run(`ALTER TABLE user_alerts ADD COLUMN occurrence_count INTEGER DEFAULT 1`, e =>
+          e ? console.warn('Migration notice: occurrence_count on user_alerts', e.message) : console.log('✅ occurrence_count added to user_alerts'));
+      }
     }
   });
 
   // 30-day alert cleanup job (runs every 6 hours)
   setInterval(() => {
     db.run(`DELETE FROM user_alerts WHERE timestamp < datetime('now', '-30 days')`, (err) => {
-      if (err) console.error('Alert cleanup failed:', err);
+      if (err) console.error('Alert cleanup failed:', err.message);
       else console.log('🧹 Old alerts cleaned up (>30 days)');
     });
   }, 6 * 60 * 60 * 1000);
@@ -590,14 +603,17 @@ db.serialize(() => {
       SELECT 1 FROM user_applications ua WHERE ua.proxy_api_key = uc.proxy_api_key
     )
   `, (err) => {
-    if (err) console.error('Migration user_configs→user_applications failed:', err);
-    else {
+    if (err) {
+      console.warn('Migration user_configs→user_applications notice:', err.message);
+    } else {
       // Backfill app_id on logs/alerts after ensuring apps exist
       db.run(`UPDATE user_request_logs SET app_id = (
         SELECT ua.id FROM user_applications ua
         WHERE ua.user_id = user_request_logs.user_id AND ua.backend_url = user_request_logs.backend_url
         LIMIT 1
-      ) WHERE app_id IS NULL`);
+      ) WHERE app_id IS NULL`, (backfillErr) => {
+        if (backfillErr) console.warn('Backfill app_id on user_request_logs notice:', backfillErr.message);
+      });
     }
   });
 
@@ -664,7 +680,9 @@ db.serialize(() => {
     if (result.count === 0) {
       console.log('📦 Importing WAF rules from file to database...');
       const fs = require('fs');
-      const wafPath = path.join(__dirname, '../security-proxy/data/waf_rules.json');
+      const wafPath = fs.existsSync(path.join(__dirname, '../services/firewall/waf-rules.json'))
+        ? path.join(__dirname, '../services/firewall/waf-rules.json')
+        : path.join(__dirname, '../security-proxy/data/waf_rules.json');
       
       fs.readFile(wafPath, 'utf8', (readErr, data) => {
         if (readErr) {
