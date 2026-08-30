@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import PhaseNotice from './PhaseNotice';
 import './AdminDashboard.css';
 
 interface DashboardStats {
@@ -1461,6 +1462,14 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
+              <PhaseNotice
+                statusBadge="45% FYP-1 Prototype"
+                phase="Phase 2 In Development (Oct 2026)"
+                title="WAF Custom Rule Engine & Hot Reloading"
+                description="Phase 1 evaluates static OWASP signature regexes compiled in Go. Dynamic in-memory rule injection, anomaly score thresholding, and user-defined rate limits are scheduled for Phase 2."
+                isMockData={false}
+              />
+
               {!wafConfig || wafConfig.length === 0 ? (
                 <div className="empty-state">
                   <Shield />
@@ -1583,6 +1592,14 @@ const AdminDashboard: React.FC = () => {
                   </button>
                 </div>
               </div>
+
+              <PhaseNotice
+                statusBadge="45% FYP-1 Prototype"
+                phase="Phase 2 In Development (Nov 2026)"
+                title="IDS / IPS Signature Rule Management"
+                description="Phase 1 monitors network traffic through pre-configured Suricata rule sets and fast.log parsing. Dynamic rule file compilation and active NFQUEUE inline packet dropping are scheduled for Phase 2."
+                isMockData={false}
+              />
 
               {!suricataRules || suricataRules.length === 0 ? (
                 <div className="empty-state">

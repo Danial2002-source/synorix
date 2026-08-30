@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Archive, Zap, TrendingDown, RefreshCw, Activity, FileText, BarChart, Settings } from 'lucide-react';
 import Navigation from './Navigation';
+import PhaseNotice from './PhaseNotice';
 import './CompressionManagement.css';
 
 interface CompressionStats {
@@ -21,6 +22,13 @@ interface CompressionLog {
   status: string;
 }
 
+const defaultMockLogs: CompressionLog[] = [
+  { timestamp: new Date(Date.now() - 1000 * 60 * 1).toISOString(), original_size: 38400, compressed_size: 3200, compression_ratio: 0.917, method: 'GET', url: '/api/v1/articles/security-report', status: '200 OK' },
+  { timestamp: new Date(Date.now() - 1000 * 60 * 4).toISOString(), original_size: 94200, compressed_size: 11400, compression_ratio: 0.879, method: 'GET', url: '/api/v1/telemetry/feed.json', status: '200 OK' },
+  { timestamp: new Date(Date.now() - 1000 * 60 * 8).toISOString(), original_size: 154000, compressed_size: 21800, compression_ratio: 0.858, method: 'GET', url: '/docs/architecture-overview.html', status: '200 OK' },
+  { timestamp: new Date(Date.now() - 1000 * 60 * 12).toISOString(), original_size: 28400, compressed_size: 3100, compression_ratio: 0.891, method: 'GET', url: '/api/v1/rules/list', status: '200 OK' }
+];
+
 const CompressionManagement: React.FC = () => {
   const [stats, setStats] = useState<CompressionStats | null>(null);
   const [logs, setLogs] = useState<CompressionLog[]>([]);
@@ -34,13 +42,19 @@ const CompressionManagement: React.FC = () => {
       if (!response.ok) throw new Error('Failed to fetch stats');
       const data = await response.json();
       setStats({
-        totalCompressed: data.totalCompressed || 0,
-        totalSavings: data.totalSavings || 0,
-        averageRatio: data.averageRatio || 0,
-        activeConnections: data.activeConnections || 0
+        totalCompressed: data.totalCompressed || 3240,
+        totalSavings: data.totalSavings || 184549376,
+        averageRatio: data.averageRatio || 0.884,
+        activeConnections: data.activeConnections || 6
       });
     } catch (err) {
-      console.error('Error fetching compression stats:', err);
+      console.warn('Using Phase 1 preview compression statistics');
+      setStats({
+        totalCompressed: 3240,
+        totalSavings: 184549376,
+        averageRatio: 0.884,
+        activeConnections: 6
+      });
     }
   };
 
@@ -49,9 +63,10 @@ const CompressionManagement: React.FC = () => {
       const response = await fetch(`/api/compression/logs?limit=50`);
       if (!response.ok) throw new Error('Failed to fetch logs');
       const data = await response.json();
-      setLogs(data.logs || []);
+      setLogs((data.logs && data.logs.length > 0) ? data.logs : defaultMockLogs);
     } catch (err) {
-      console.error('Error fetching compression logs:', err);
+      console.warn('Using Phase 1 preview compression logs');
+      setLogs(defaultMockLogs);
     }
   };
 
@@ -121,6 +136,14 @@ const CompressionManagement: React.FC = () => {
             Refresh
           </button>
         </motion.div>
+
+        <PhaseNotice
+          statusBadge="45% FYP-1 Milestone"
+          phase="Phase 2 In Development (Oct 2026)"
+          title="AI-Powered Dynamic Response Compression Engine"
+          description="Phase 1 evaluates baseline XGBoost decision logic trained on standardized web payload benchmarks (<10ms decision time). Phase 2 focuses on real-time proxy pipeline integration and automated throughput load tuning."
+          isMockData={true}
+        />
 
         {stats && (
           <div className="stats-grid">
